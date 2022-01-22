@@ -7,21 +7,28 @@ using json = nlohmann::json;
 using namespace std;
 
 
-// ws - обхект/параметр вебсокета
+// ws - объект/параметр вебсокета
 
 const string COMMAND = "command";
 const string PRIVATE_MSG = "private_msg";
-const string SET_NAME = "set_name";
+const string CHANGE_NAME = "change_name";
 const string USER_ID = "user_id";
+const string TIME = "time";
 const string USER_FROM = "user_from";
+const string NAME_FROM = "name_from";
 const string MESSAGE = "message";
 const string NAME = "name";
 const string ONLINE = "online";
 const string STATUS = "status";
 const string BROADCAST = "broadcast";
+const string REGISTRATION = "registration";
+const string AUTHORIZATION_STATUS = "authorization_status";
+const string AUTHORIZATION = "authorization";
+const string LOAD_MSG = "load_msg";
+const string LOAD_USERS = "load_users";
+
 
 struct PerSocketData {
-    /* Fill with user data */
     int user_id;
     string name;
 };
@@ -30,7 +37,6 @@ map<int, PerSocketData*> activeUsers;
 
 typedef uWS::WebSocket < false, true, PerSocketData> UWEBSOCK;
 
-//void sendPrivateResponse (UWEBSOCK* ws, )
 
 string status(PerSocketData* data, bool online)
 {
@@ -45,21 +51,27 @@ string status(PerSocketData* data, bool online)
 
 void processMessage(UWEBSOCK* ws, std::string_view message)
 {
-    //распарсенная инфа
     PerSocketData* data = ws->getUserData();
     auto parsed = json::parse(message);
     string command = parsed[COMMAND];
 
     if (command == PRIVATE_MSG)
     {
-        int user_id = parsed[USER_ID];
-        string user_msg = parsed[MESSAGE];
-        int sender = data->user_id;
-        json response;
-        response[COMMAND] = PRIVATE_MSG;
-        response[USER_FROM] = data->user_id;
-        response[MESSAGE] = user_msg;
-        ws->publish("UserN" + to_string(user_id), response.dump());
+        try {
+            string user_id = to_string(parsed[USER_ID]);
+            string user_msg = parsed[MESSAGE];
+            int sender = data->user_id;
+            json response;
+            response[COMMAND] = PRIVATE_MSG;
+            response[NAME_FROM] = data->name;
+            response[MESSAGE] = user_msg;
+            response[TIME] = parsed[TIME];
+            ws->publish("UserN" + user_id, response.dump());
+        }
+        catch(...) {
+            cout << "[-] Error to send msg!\n";
+        }
+
 
     }
     if (command == SET_NAME)
@@ -70,30 +82,29 @@ void processMessage(UWEBSOCK* ws, std::string_view message)
 }
 
 int main() {
-    /* ws->getUserData returns one of these */
     int latest_id = 10;
 
     uWS::App().ws<PerSocketData>("/*", {
-        /* Settings */
-        .idleTimeout = 9999, //
+        .idleTimeout = 9999, /*
         .maxBackpressure = 1 * 1024 * 1024,
         .closeOnBackpressureLimit = false,
         .resetIdleTimeoutOnSend = false,
         .sendPingsAutomatically = true,
+        */
         /* Handlers */
         .open = [&latest_id](auto* ws) {
-            /* Open event here, you may access ws->getUserData() which points to a PerSocketData struct */
 
             PerSocketData* data = ws->getUserData();
             data->user_id = latest_id++;
 
             cout << "User " << data->user_id << "has connected" << endl;
 
+
+
             ws->publish(BROADCAST, status(data, true));
 
-            ws->subscribe("broadcast");//сообщения получают все пользователи
-            ws->subscribe("UserN" + to_string(data->user_id));// личный канал
-
+            ws->subscribe(BROADCAST); //сообщения получают все пользователи
+            ws->subscribe("UserN" + to_string(data->user_id)); // личный канал
 
 
             for (auto entry : activeUsers)
@@ -108,7 +119,8 @@ int main() {
         .message = [](auto* ws, std::string_view message, uWS::OpCode opCode) {
             // ws->send(message, opCode, true);
             PerSocketData* data = ws->getUserData();
-            cout << "Message from N " << data->user_id << ": " << message << endl;
+
+            cout << message << endl;
 
             processMessage(ws, message);
         },
@@ -120,10 +132,10 @@ int main() {
             cout << "close" << endl;
             ws->publish(BROADCAST, status(data, false));
 
-            activeUsers.erase(data->user_id); // удалили из карты
+            activeUsers.erase(data->user_id);
 
         }
-    }).listen(9001, [](auto* listen_socket) { //9001 - порт
+    }).listen(9001, [](auto* listen_socket) {
         if (listen_socket) {
             std::cout << "Listening on port " << 9001 << std::endl;
         }

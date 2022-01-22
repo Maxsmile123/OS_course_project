@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Messenger</title>
+    <link rel="stylesheet" href="styles/style.css">
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/interactive_menu.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="icon-section">
+            <button id="mainMenu" class="menu"><img src="resourses/list.png" height="42px" width="35px"></button>
+        </div>
+        <div class="menu-section"> 
+            <div class="menu-section-header">
+                <button class="exit"><img src="resourses/free-icon-remove-1828843.png" height="34px" width="34px"></button>
+            </div>
+            <ul>
+                <a id ="CN" href="#"><li>Изменить имя</li></a>
+                <a href="#"><li>О проекте</li></a>
+                <a href="#"><li>Помощь</li></a>
+                <a href="#"><li>Выход</li></a>
+            </ul>
+            <div class="menu-section-foot">
+                &copy; Copyright 2022</br>&nbsp Sysoev Maksim
+            </div>
+        </div>
+        <div class="left">
+            <div class="messages-list">
+
+            </div>
+
+            <div class="input">
+                <button name="files"> <img src="resourses/premium-icon-paper-clip-354597.png" height="41px" width="41px"> </button>
+                <textarea id="textarea" spellcheck="true" maxlength="1024" cols="150" rows="3.5" placeholder="Введите текст сообщения..." ></textarea>
+                <button id="send"><img src="resourses/free-icon-right-arrow-2026746.png" height="41px"></button>
+            </div>
+        </div>      
+        <div class="right">
+            <div class="users-list">
+                <ul class = "users-list-ul">
+                    <li><a class ="NeedToClick" href="#">🟢 all</a></li>
+                    <li><a class ="NeedToClick" href="#">🟢 user1</a></li>
+                    <li><a class ="NeedToClick" href="#">🔴 user2</a></li>
+                    <li><a class ="NeedToClick" href="#">🔴 user3</a></li>
+                </ul>
+             
+             
+
+                
+            </div>
+            <div class="current-user">all</div>
+        </div>
+    </div>
+</body>
+</html>

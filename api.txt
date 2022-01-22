@@ -1,0 +1,101 @@
+REGISTRATION
+    input: {
+        "command": registration,
+        "name": name,
+        "password" : password,
+        "login" : login
+    }
+    response: {
+        "result" : true/false,
+        "user_id" : user_id,
+        "command": registration
+    }
+
+AUTHORIZATION
+    input: {
+        "command": authorization,
+        "password" : password,
+        "login" : login
+    }
+    response: {
+        "result" : true/false,
+        "command": authorization
+    }
+
+AUTHORIZATION_STATUS 
+    input: {
+        "command": authorization_status,
+    }
+    response: {
+        "result" : true/false,
+        "name": userName,
+        "command": authorization_status
+    }
+
+PRIVATE_MSG (user_id = -1 -> broadcast)
+    input: {
+        "command": private_msg,
+        "user_id" : user_id,
+        "time" : time,
+        "message" : message
+    }
+    response: {
+        "message" : message,
+        "time" : time,
+        "name_from" : name,
+        "command" : private_msg
+    }
+
+CHANGE_NAME {
+    input: {
+        "command": change_name,
+        "new_name" : new_name
+    }
+    response: {
+        "result" : true/false,
+        "command" : change_name,
+    }
+}
+
+LOAD_USERS {
+     input: {
+        "command": load_users,
+    }
+    response: {
+        "users" : [
+            {
+                "id" : id,
+                "name" : name,
+                "status" : online/offline
+            }
+        ]
+        
+    }
+}
+
+LOAD_MSG {
+    input: {
+        "command": load_msg,
+    }
+    response: {
+        "messages" : [
+            {
+                "time" : time and data,
+                "user_from" : name,
+                "text" : text
+            }
+        ]
+        
+    }
+}
+
+GET_ID {
+    input: {
+        "command": get_id,
+        "name": name;
+    }
+    response: {
+        "command": get_id,
+        "id": id
+    }
+}
