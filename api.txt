@@ -2,12 +2,13 @@ REGISTRATION
     input: {
         "command": registration,
         "name": name,
+        "from_id" : id,
         "password" : password,
         "login" : login
     }
     response: {
         "result" : true/false,
-        "user_id" : user_id,
+        "reason" : error_msg,
         "command": registration
     }
 
@@ -19,23 +20,16 @@ AUTHORIZATION
     }
     response: {
         "result" : true/false,
+        "name": name,
         "command": authorization
     }
 
-AUTHORIZATION_STATUS 
-    input: {
-        "command": authorization_status,
-    }
-    response: {
-        "result" : true/false,
-        "name": userName,
-        "command": authorization_status
-    }
 
 PRIVATE_MSG (user_id = -1 -> broadcast)
     input: {
         "command": private_msg,
-        "user_id" : user_id,
+        "from_id": from_id
+        "to_id" : user_id,
         "time" : time,
         "message" : message
     }
@@ -48,7 +42,9 @@ PRIVATE_MSG (user_id = -1 -> broadcast)
 
 CHANGE_NAME {
     input: {
+        "from_id" : id,
         "command": change_name,
+        "old_name" : old_name,
         "new_name" : new_name
     }
     response: {
@@ -64,17 +60,17 @@ LOAD_USERS {
     response: {
         "users" : [
             {
-                "id" : id,
                 "name" : name,
-                "status" : online/offline
+                "status" : 1/0
             }
         ]
-        
+
     }
 }
 
 LOAD_MSG {
     input: {
+        "from_id" : id,
         "command": load_msg,
     }
     response: {
