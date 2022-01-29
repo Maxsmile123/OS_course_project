@@ -1,5 +1,5 @@
 # Веб-мессенджер
-<img alt="chat icon" src="https://github.com/Maxsmile123/OS_course_work/resourses/chat.png" width="100%">
+<img alt="chat icon" src="https://github.com/Maxsmile123/OS_course_work/blob/935d9543b3ced5250740c41da0c39ba31ca85891/resourses/chat.png" width="500px">
 
 ### Описание
 
@@ -7,7 +7,7 @@
 Дизайн был выполнен как можно более непохожий на классические мессенджеры, с сохранением структуры, к которой все привыкли.   
 Работает по технологии webSocket.  
 
-### Функционал:
+### Функционал
 
 - Отправка сообщения всем пользователям мессенджера :white_check_mark:
 - Отправка личных сообщений :white_check_mark:
@@ -16,8 +16,8 @@
 - Возможность изменить имя :white_check_mark:
 
 
-### Макет
-<img alt="Макет" src="https://github.com/Maxsmile123/OS_course_work/resourses/img.png" width="100%">
+### Макет:
+<img alt="Макет" src="https://github.com/Maxsmile123/OS_course_work/blob/935d9543b3ced5250740c41da0c39ba31ca85891/resourses/img.png" width="100%">
 
 ---
 
