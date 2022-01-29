@@ -20,6 +20,7 @@ AUTHORIZATION
     }
     response: {
         "result" : true/false,
+        "user_id" : id
         "name": name,
         "command": authorization
     }
@@ -58,6 +59,7 @@ LOAD_USERS {
         "command": load_users,
     }
     response: {
+        "command": load_users,
         "users" : [
             {
                 "name" : name,
@@ -74,11 +76,12 @@ LOAD_MSG {
         "command": load_msg,
     }
     response: {
+        "command": load_msg,
         "messages" : [
             {
                 "time" : time and data,
                 "user_from" : name,
-                "text" : text
+                "message" : text
             }
         ]
         

@@ -10,7 +10,7 @@ using namespace std;
 
 // ws - обхект/параметр вебсокета
 
-const char* SQL_CREATE_USERS_TABLE = "CREATE TABLE IF NOT EXIST USERS("  \
+const char* SQL_CREATE_USERS_TABLE = "CREATE TABLE IF NOT EXISTS USERS("  \
 "USER_ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," \
 "NAME TEXT NOT NULL UNIQUE," \
 "STATUS BIT," \
@@ -19,7 +19,7 @@ const char* SQL_CREATE_USERS_TABLE = "CREATE TABLE IF NOT EXIST USERS("  \
 "TIME_TO_GO_OFFLINE TEXT);";
 
 
-const char* SQL_CREATE_MSG_TABLE = "CREATE TABLE IF NOT EXIST MSG("  \
+const char* SQL_CREATE_MSG_TABLE = "CREATE TABLE IF NOT EXISTS MSG("  \
 "TIME TEXT NOT NULL," \
 "FROM_USER INTEGER NOT NULL," \
 "TO_USER INTEGER NOT NULL," \
@@ -111,12 +111,16 @@ void processMessage(UWEBSOCK* ws, std::string_view message)
             response[NAME_FROM] = get_name(user_id);
             response[MESSAGE] = user_msg;
             response[TIME] = parsed[TIME];
+            if (user_id == "-1") {
+                ws->publish(BROADCAST, response.dump());
+            }
             ws->publish("UserN" + user_id, response.dump());
             string SQL_RESPONSE = "INSERT INTO MSG(TIME, FROM_USER, TO_USER, MESSAGE) VALUES(" + to_string(response[TIME]) + ", " + sender + ", " +
                 user_id + ", " + user_msg + ");";
             db.exec(SQL_RESPONSE);
         }
-        catch(...) {
+        catch (std::exception& e) {
+            cout << "SQLite exception: " << e.what() << std::endl;
             cout << "[-] Error to send msg!\n";
         }
 
@@ -133,7 +137,8 @@ void processMessage(UWEBSOCK* ws, std::string_view message)
             response[COMMAND] = CHANGE_NAME;
             ws->publish("UserN" + sender, response.dump());
         }
-        catch (...) {
+        catch (std::exception& e) {
+            cout << "SQLite exception: " << e.what() << std::endl;
             cout << "[-] Error to change name!\n";
             response[RESULT] = "false";
             response[COMMAND] = CHANGE_NAME;
@@ -172,8 +177,18 @@ void processMessage(UWEBSOCK* ws, std::string_view message)
     }
     if (command == LOAD_MSG)
     {
-
-
+        SQLite::Statement   query(db, "SELECT * FROM MSG WHERE FROM_USER = ? OR TO_USER = ?;");
+        query.bind(1, to_string(parsed[FROM_ID]));
+        query.bind(2, to_string(parsed[FROM_ID]));
+        while (query.executeStep())
+        {
+            response[COMMAND] = LOAD_MSG;
+            response[TIME] = query.getColumn(0);
+            response[FROM_ID] = query.getColumn(1);
+            response[TO_ID] = query.getColumn(2);
+            response[MESSAGE] = query.getColumn(3);
+            ws->publish("UserN" + sender, response.dump());
+        }
     }
     if (command == LOAD_USERS)
     {
@@ -189,15 +204,30 @@ void processMessage(UWEBSOCK* ws, std::string_view message)
     }
     if (command == AUTHORIZATION)
     {
-
-
+        bool IS_EXIST = false;
+        SQLite::Statement   query(db, "SELECT NAME, USER_ID FROM USERS WHERE LOGIN = ? AND PASSWORD = ?;");
+        query.bind(1, to_string(parsed["login"]));
+        query.bind(2, to_string(parsed["password"]));
+        while (query.executeStep())
+        {
+            IS_EXIST = true;
+            response[NAME] = query.getColumn(0);
+            response[USER_ID] = query.getColumn(1);
+            break;
+        }
+        response[AUTHORIZATION] = AUTHORIZATION;
+        if (IS_EXIST) {
+            response[RESULT] = "true";
+        } else {
+            response[RESULT] = "false";
+        }
+        ws->publish("UserN" + sender, response.dump());
     }
     if (command == GET_ID)
     {
         response[COMMAND] = GET_ID;
         response["id"] = get_id(parsed[NAME]);
         ws->publish("UserN" + sender, response.dump());
-
     }
 }
 
@@ -242,9 +272,9 @@ int main() {
             activeUsers.erase(data->user_id); // удалили из карты
 
         }
-    }).listen(9001, [](auto* listen_socket) { //9001 - порт
-        if (listen_socket) {
-            std::cout << "Listening on port " << 9001 << std::endl;
-        }
-    }).run();
+        }).listen(9001, [](auto* listen_socket) { //9001 - порт
+            if (listen_socket) {
+                std::cout << "Listening on port " << 9001 << std::endl;
+            }
+            }).run();
 }
