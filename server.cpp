@@ -3,6 +3,7 @@
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <iostream>
 #include <string>
+#include <queue>
 
 using json = nlohmann::json;
 using namespace std;
@@ -45,8 +46,12 @@ const string LOAD_USERS = "load_users";
 const string GET_ID = "get_id";
 const string FROM_ID = "from_id";
 const string TO_ID = "to_id";
+const string CHECK = "check";
 
 SQLite::Database    db("database.db3", SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
+
+queue <string> sessions_name;
+queue <string> sessions_id;
 
 
 
@@ -60,6 +65,8 @@ map<int, PerSocketData*> activeUsers;
 
 typedef uWS::WebSocket < false, true, PerSocketData> UWEBSOCK;
 
+uWS::OpCode OpCode;
+
 
 string status(PerSocketData* data, bool online)
 {
@@ -71,15 +78,19 @@ string status(PerSocketData* data, bool online)
 }
 
 
-int get_id(string name) {
-    SQLite::Statement   query(db, "SELECT USER_ID FROM USERS WHERE NAME = ?");
-    query.bind(1, name);
-    while (query.executeStep())
-    {
-        int id = query.getColumn(0);
-        return id;
+string get_id(string name) {
+    try {
+        SQLite::Statement   query(db, "SELECT USER_ID FROM USERS WHERE NAME = " + name);
+        while (query.executeStep())
+        {
+            string id = query.getColumn(0);
+            return id;
+        }
+        return "NULL";
+    } catch (std::exception& e) {
+        cout << "SQLite exception: " << e.what() << std::endl;
+        cout << "[-] Error to get_id!\n";
     }
-    return -2;
 }
 
 string get_name(string id) {
@@ -126,6 +137,20 @@ void processMessage(UWEBSOCK* ws, std::string_view message)
 
 
     }
+    if (command == CHECK) {
+        if (sessions_name.empty() || sessions_id.empty()) {
+            response[NAME] = "null";
+            response[USER_ID] = "null";
+        } else {
+            response[NAME] = sessions_name.front();
+            response[USER_ID] = sessions_id.front();
+            sessions_name.pop();
+            sessions_id.pop();
+        }
+        response[COMMAND] = CHECK;
+        cout << response << endl;
+        ws->send(response.dump(), OpCode);
+    }
     if (command == CHANGE_NAME)
     {
         try {
@@ -135,14 +160,16 @@ void processMessage(UWEBSOCK* ws, std::string_view message)
             db.exec(SQL_RESPONSE);
             response[RESULT] = "true";
             response[COMMAND] = CHANGE_NAME;
-            ws->publish("UserN" + sender, response.dump());
+            cout << response << endl;
+            ws->send(response.dump(), OpCode);
         }
         catch (std::exception& e) {
             cout << "SQLite exception: " << e.what() << std::endl;
             cout << "[-] Error to change name!\n";
             response[RESULT] = "false";
             response[COMMAND] = CHANGE_NAME;
-            ws->publish("UserN" + sender, response.dump());
+            cout << response << endl;
+            ws->send(response.dump(), OpCode);
         }
     }
     if (command == REGISTRATION)
@@ -153,25 +180,33 @@ void processMessage(UWEBSOCK* ws, std::string_view message)
         query.bind(1, login);
         while (query.executeStep())
         {
-            cout << query.getColumn(0) << endl;
             IS_EXIST = true;
             break;
 
         }
+
         if (!IS_EXIST) {
-            string SQL_RESPONSE = "INSERT INTO USERS(NAME, STATUS, LOGIN, PASSWORD, TIME_TO_GO_OFFLINE) VALUES (" + to_string(parsed[NAME]) + ","
-                + "0 ," + to_string(parsed["login"]) + ", " + to_string(parsed["password"]) + ", " + "NONE);";
-            db.exec(SQL_RESPONSE);
+            try {
+                string SQL_RESPONSE = "INSERT INTO USERS(NAME, STATUS, LOGIN, PASSWORD, TIME_TO_GO_OFFLINE) VALUES (" + to_string(parsed[NAME]) + ","
+                    + "0 ," + to_string(parsed["login"]) + ", " + to_string(parsed["password"]) + ", " + "123);";
+                db.exec(SQL_RESPONSE);
+            }
+            catch (std::exception& e) {
+                cout << "SQLite exception: " << e.what() << std::endl;
+                return;
+            }
             response[COMMAND] = REGISTRATION;
             response[RESULT] = "true";
             response["reason"] = "none";
-            ws->publish("UserN" + sender, response.dump());
+            cout << response << endl;
+            ws->send(response.dump(), OpCode);
         }
         else {
             response[COMMAND] = REGISTRATION;
             response[RESULT] = "false";
             response["reason"] = "This login is already exist!";
-            ws->publish("UserN" + sender, response.dump());
+            cout << response << endl;
+            ws->send(response.dump(), OpCode);
         }
 
     }
@@ -187,7 +222,8 @@ void processMessage(UWEBSOCK* ws, std::string_view message)
             response[FROM_ID] = query.getColumn(1);
             response[TO_ID] = query.getColumn(2);
             response[MESSAGE] = query.getColumn(3);
-            ws->publish("UserN" + sender, response.dump());
+            cout << response << endl;
+            ws->send(response.dump(), OpCode);
         }
     }
     if (command == LOAD_USERS)
@@ -199,35 +235,46 @@ void processMessage(UWEBSOCK* ws, std::string_view message)
             response[COMMAND] = LOAD_USERS;
             response[NAME] = query.getColumn(0);
             response[STATUS] = query.getColumn(1);
-            ws->publish("UserN" + sender, response.dump());
+            cout << response << endl;
+            ws->send(response.dump(), OpCode);
         }
     }
     if (command == AUTHORIZATION)
     {
         bool IS_EXIST = false;
-        SQLite::Statement   query(db, "SELECT NAME, USER_ID FROM USERS WHERE LOGIN = ? AND PASSWORD = ?;");
-        query.bind(1, to_string(parsed["login"]));
-        query.bind(2, to_string(parsed["password"]));
-        while (query.executeStep())
-        {
-            IS_EXIST = true;
-            response[NAME] = query.getColumn(0);
-            response[USER_ID] = query.getColumn(1);
-            break;
+        SQLite::Statement   query(db, "SELECT NAME, USER_ID FROM USERS WHERE LOGIN = " + to_string(parsed["login"]) + "AND PASSWORD = "
+         + to_string(parsed["password"]));
+        try {
+            while (query.executeStep())
+            {
+                IS_EXIST = true;
+                response[NAME] = query.getColumn(0);
+                response[USER_ID] = query.getColumn(1);
+                break;
+            }
         }
-        response[AUTHORIZATION] = AUTHORIZATION;
+        catch (std::exception& e)
+        {
+            cout << e.what() << std::endl;
+        }
+        query.reset();
+        response[COMMAND] = AUTHORIZATION;
         if (IS_EXIST) {
             response[RESULT] = "true";
+            sessions_name.push(response[NAME]);
+            sessions_id.push(response[USER_ID]);
         } else {
             response[RESULT] = "false";
         }
-        ws->publish("UserN" + sender, response.dump());
+        cout << response << endl;
+        ws->send(response.dump(), OpCode);
     }
     if (command == GET_ID)
     {
         response[COMMAND] = GET_ID;
-        response["id"] = get_id(parsed[NAME]);
-        ws->publish("UserN" + sender, response.dump());
+        response["id"] = get_id(to_string(parsed[NAME]));
+        cout << response << endl;
+        ws->send(response.dump(), OpCode);
     }
 }
 
@@ -253,11 +300,32 @@ int main() {
         */
         /* Handlers */
         .open = [](auto* ws) {
-
+            /*
+            try {
+                queue<string> copy_name = sessions_name;
+                queue<string> copy_id = sessions_id;
+                while (copy_name.empty()) {
+                    cout << copy_name.front() << endl;
+                    copy_name.pop();
+                }
+                while (copy_id.empty()) {
+                    cout << copy_id.front() << endl;
+                    copy_id.pop();
+                }
+            } catch (std::exception& e) {
+                cout << e.what() << std::endl;
+                return;
+                }
+                */
+            cout << "Succsessful connection" << endl;
+            ws->subscribe(BROADCAST); //сообщения получают все пользователи
+            ws->subscribe("UserN"); // личный канал
         },
         .message = [](auto* ws, std::string_view message, uWS::OpCode opCode) {
+            OpCode = opCode;
             // ws->send(message, opCode, true);
             PerSocketData* data = ws->getUserData();
+            cout << message << endl;
 
             processMessage(ws, message);
         },
@@ -267,7 +335,6 @@ int main() {
             PerSocketData* data = ws->getUserData();
 
             cout << "close" << endl;
-            ws->publish(BROADCAST, status(data, false));
 
             activeUsers.erase(data->user_id); // удалили из карты
 

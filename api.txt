@@ -2,7 +2,6 @@ REGISTRATION
     input: {
         "command": registration,
         "name": name,
-        "from_id" : id,
         "password" : password,
         "login" : login
     }
@@ -67,6 +66,16 @@ LOAD_USERS {
             }
         ]
 
+    }
+}
+
+CHECK AUTH status{
+     input: {
+        "command": check,
+    }
+    response: {
+        "user_id" : id,
+        "name": name
     }
 }
 

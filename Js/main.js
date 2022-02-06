@@ -1,10 +1,10 @@
+
+
 $(function(){
 
     var myID = undefined;
-    var userName = "Maxim";
+    var userName = undefined;
     var user_id_to = -1;
-
-
 
 
     webSocket = new WebSocket("ws://localhost:9001");
@@ -30,12 +30,17 @@ $(function(){
     }
 
     let initChat = function(){
+        let jsonUSERS = {
+            "command": "load_users"
+        }
+        webSocket.send(JSON.stringify(jsonUSERS));
+        showYourName();
 
     };
 
     let get_history = function(){
         let jsonREQ = {
-            "from_id" : user_id_to,
+            "for_id" : user_id_to,
             "command": "load_msg",
         }
         webSocket.send(JSON.stringify(jsonREQ));
@@ -52,23 +57,14 @@ $(function(){
             addSendMSG(data);
         } else if (data.command == "get_id"){
             user_id_to = data.id;
-        } else if (data.command == "registration"){
-            if (data.result == "true"){
-                alert("Регистрация успешно пройдена!") // Вместо алерт сделать это ввиде вывода на экране. Сверстать страницу регистрации и авторизации
+        } else if (data.command == "check"){
+            if (data.user_id == "null" || data.name == "null"){
                 window.location.href = "C:\\Users\\Sysoe\\VSCodeProjects\\Frontend motherfacker\\index.html";
-            } else if (data.result == "false"){
-                alert(data.reason); // / Вместо алерт сделать это ввиде вывода на экране.
             }
-
-        } else if (data.command == "authorization"){
-            if (data.result == "true"){
-                alert("Авторизация успешно пройдена!") // Вместо алерт сделать это ввиде вывода на экране. Сверстать страницу регистрации и авторизации
-                userName = data.name;
-                myID = data.user_id;
-                window.location.href = "C:\\Users\\Sysoe\\VSCodeProjects\\Frontend motherfacker\\messenger.html";
-            } else if (data.result == "false"){
-                alert("Неверные логин или пароль :("); // / Вместо алерт сделать это ввиде вывода на экране.
-            }
+            myID = data.user_id;
+            userName = data.name;
+            console.log(myID);
+            console.log(userName);
         } else if (data.command == "load_users"){
             loadUsers(data);
         } else if (data.command == "load_msg"){
@@ -150,16 +146,39 @@ $(function(){
         webSocket.send(JSON.stringify(jsonCN));
     });
 
-    $(".NeedToClick").click(function(){
+    $(".users-list-ul").on("click", ".NeedToClick",  function(){
         let users_list = $(this);
         let cur_user_block = $('.current-user');
-        let cur_user = users_list[0].innerText.substr(2);
+        let cur_user = users_list[0].innerText.substr(3);
         cur_user_block[0].innerHTML = cur_user;
+        console.log(cur_user);
         getID(cur_user);
-        get_history();
+        etTimeout(() => {
+            get_history();}, 500);
+
     });
 
-    initChat();
+    let showYourName = function(){
+        let cur_user_block = $('.menu-section-header');
+        let nameadd = ("<span class=\"NameStyle\">" + userName + "</span>");
+        cur_user_block.append(nameadd);
+    }
+
+    let checkAuthStatus = function(){
+        var jsonCAS = {
+            "command": "check",
+        }
+        webSocket.send(JSON.stringify(jsonCAS));
+    }
+    setTimeout(() => {
+        checkAuthStatus();}, 500);
+
+    setTimeout(() => {
+        initChat();}, 1500);
+
+
+
+
 
 
 
