@@ -10,6 +10,10 @@ function blink()
 
 $(function(){
     webSocket = new WebSocket("ws://localhost:9001");
+    webSocket.onerror = function(error) {
+        alert("Failed to connect to the server.\nCode Error: 1");
+        window.location.reload();
+    };
     webSocket.onmessage = function(event){
         console.log(event);
         data = JSON.parse(event.data);
@@ -28,7 +32,7 @@ $(function(){
                 }
             }
         } else{
-            alert("Произошла ошибка, попробуйте ещё раз!");
+            alert("An error has occurred, try again! Error code: 4");
         }
     }
     function validate (input) {

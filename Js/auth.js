@@ -1,10 +1,12 @@
 $(function(){
 
-
-    var myID = undefined;
-    var userName = "Maxim";
-
     webSocket = new WebSocket("ws://localhost:9001");
+
+    webSocket.onerror = function(error) {
+        alert("Failed to connect to the server.\nCode Error: 1");
+        window.location.reload();
+    };
+
     webSocket.onmessage = function(event){
         data = JSON.parse(event.data);
         processingMSG(data);
@@ -13,21 +15,27 @@ $(function(){
     let processingMSG = function(data){
         if (data.command == "authorization"){
             if (data.result == "true"){
-                // Проигрыш gifки
-                userName = data.name;
-                myID = data.user_id;
-                webSocket.close();
-                window.location.href = "C:\\Users\\Sysoe\\VSCodeProjects\\Frontend motherfacker\\messenger.html";
+                $('.container-login100').animate({
+                    left: '2000px'
+                }, 0);
+                $('.container-login100L').animate({
+                    left: '0px'
+                }, 0);
+                window.scrollTo(0, document.body.scrollHeight);
+
+                setTimeout(() => {
+                    window.location.href = "C:\\Users\\Sysoe\\VSCodeProjects\\Frontend motherfacker\\messenger.html";}, 15500);
+
             } else if (data.result == "false"){
 
                 let msgplace = $('.incorrent-login');
                 if(msgplace[0].innerHTML == ""){
-                    let msg = "Неверные логин или пароль!";
+                    let msg = "Invalid username or password!";
                     msgplace.append(msg);
                 }
             }
         } else{
-            alert("Произошла ошибка, попробуйте ещё раз!");
+            alert("An error has occurred, try again! Error code: 5");
         }
     }
     function validate (input) {

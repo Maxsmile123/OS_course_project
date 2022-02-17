@@ -1,24 +1,25 @@
-
-
 $(function(){
 
     var myID = undefined;
     var userName = undefined;
     var user_id_to = -1;
 
-
     webSocket = new WebSocket("ws://localhost:9001");
+
+
     webSocket.onmessage = function(event){
         data = JSON.parse(event.data);
         processingMSG(data);
     };
 
+
     webSocket.onclose = function(event){
         if (!event.wasClear){
-            alert("Соединение прервано... пожалуйста, авторизируйтесь заново.");
+
+            alert("Connection terminated... please log in again. \nCode Error: 2");
             window.location.href = "C:\\Users\\Sysoe\\VSCodeProjects\\Frontend motherfacker\\index.html"; // redirect on auth page
         } else{
-            alert('Код: ' + event.code + ' причина: ' + event.reason);
+            alert('Code Error: ' + event.code + ' Reason: ' + event.reason);
         }
     }
 
@@ -29,11 +30,19 @@ $(function(){
         return dateString;
     }
 
-    let initChat = function(){
+    let get_users_list = function(){
         let jsonUSERS = {
-            "command": "load_users"
+            "command": "load_users",
+            "user_id": myID
         }
+        let usersList = $('.users-list-ul');
+        usersList[0].innerText = "";
         webSocket.send(JSON.stringify(jsonUSERS));
+    }
+
+    let initChat = function(){
+        get_users_list();
+        get_history();
         showYourName();
 
     };
@@ -41,24 +50,30 @@ $(function(){
     let get_history = function(){
         let jsonREQ = {
             "for_id" : user_id_to,
+            "user_id" : myID,
             "command": "load_msg",
         }
         webSocket.send(JSON.stringify(jsonREQ));
+        let messagesList = $('.messages-list');
+        messagesList[0].innerText = "";
     }
 
     let processingMSG = function(data){
         if (data.command == "change_name"){
-            if (data.result){
-                alert("Имя успешно изменено! :)");
+            if (data.result == "true"){
+                console.log(data.new_name);
+                userName = data.new_name;
+                showYourName();
+                alert("The name has been successfully changed! :)");
             } else{
-                alert("Невозможно изменить на введёное имя :(");
+                alert("Cannot be changed to the entered name :( \nError code: 3");
             }
         } else if (data.command == "private_msg"){
             addSendMSG(data);
         } else if (data.command == "get_id"){
             user_id_to = data.id;
         } else if (data.command == "check"){
-            if (data.user_id == "null" || data.name == "null"){
+            if (data.user_id == "NULL" || data.name == "NULL"){
                 window.location.href = "C:\\Users\\Sysoe\\VSCodeProjects\\Frontend motherfacker\\index.html";
             }
             myID = data.user_id;
@@ -69,6 +84,21 @@ $(function(){
             loadUsers(data);
         } else if (data.command == "load_msg"){
             loadMessages(data);
+        } else if (data.command == "update"){
+            let jsonUSERS = {
+                "command": "load_users",
+                "user_id": myID
+            }
+            let usersList = $('.users-list-ul');
+            usersList[0].innerText = "";
+            webSocket.send(JSON.stringify(jsonUSERS));
+        } else if (data.command == "ping"){
+            let jsonPING = {
+                "command": "ping",
+                "user_id": myID,
+            }
+            webSocket.send(JSON.stringify(jsonPING));
+
         }
 
 
@@ -77,40 +107,45 @@ $(function(){
         let time = getTime();
         let messagesList = $('.messages-list');
         var text = document.getElementById('textarea');
-        var msg = text.value;
+        var msg = text.value.replace("\n", "");
         if (msg == "") return;
         text.value = "";
         let jsonMSG = {
             "command": "private_msg",
-            "user_id": user_id_to,
+            "from_id": myID,
+            "to_id" : user_id_to,
             "message": msg,
             "time": time
         }
         webSocket.send(JSON.stringify(jsonMSG));
-        let messageItem = $('<div class="message-header-you">'
-            + '[' + time + ' Вы]:' + '&nbsp' + '</div>'
-            + '<div class="message">' + msg + '</div>');
+        let headerItem = $('<span class="message-header-you">'
+            + '[' + time + ' Вы]: <wbr>' + '</span>');
+        messageItem = $('<span class="message">' + msg + '</span>' + '</br>');
+        messagesList.append(headerItem);
         messagesList.append(messageItem);
+        get_users_list();
     });
 
     let loadMessages = function(data){
         let messagesList = $('.messages-list');
         let messageItem;
-        if(data.user_from == userName){
-            messageItem = $('<div class="message-header-you">'
-                + '[' + data.time + ' Вы]:' + '&nbsp' + '</div>'
-                + '<div class="message">' + data.message + '</div>');
+        let headerItem;
+        if(data.name == userName){
+            headerItem = $('<span class="message-header-you">'
+                + '[' + data.time + ' Вы]: <wbr> ' + '</span>');
+            messageItem =  $('<span class="message">' + data.message  + '</span>' + '</br>');
         } else{
-            messageItem = $('<div class="message-header">'
-                + '[' + data.time + data.user_from + ']:' + '&nbsp' + '</div>'
-                + '<div class="message">' + data.message + '</div>');
+            headerItem = $('<span class="message-header">'
+                + '[' + data.time + " " + data.name + ']: <wbr> ' + '</span>');
+            messageItem =  $('<span class="message">' + data.message + '</span>' + '</br>');
         }
+        messagesList.append(headerItem);
         messagesList.append(messageItem);
     };
 
     let loadUsers = function(data){
         let usersList = $('.users-list-ul');
-        let user;
+        let user = undefined;
         if(data.status == "0"){
             user = $('<li><a class ="NeedToClick" href="#">' + '🔴 ' + data.name + '</a></li>');
         } else if (data.status == "1"){
@@ -130,17 +165,19 @@ $(function(){
 
     let addSendMSG = function(data) {
         let messagesList = $('.messages-list');
-        let messageItem = $('<div class="message-header">'
-            + '[' + data.time + ' ' + data.name_from +  ' ]:' + '&nbsp' + '</div>'
-            + '<div class="message">' + data.message + '</div>');
+        data.message = data.message.replaceAll(/"/g, '');
+        let headerItem = $('<span class="message-header">'
+            + '[' + data.time + " " + data.name_from + ']: <wbr> ' + '</span>');
+        let messageItem =  $('<span class="message">' + data.message + '</span>' + '</br>');
+        messagesList.append(headerItem);
         messagesList.append(messageItem);
     }
 
     $('#CN').click(function(){
-        let name = prompt('Введите новое имя пользователя:');
-        userName = name;
+        let name = prompt('Enter a new username:');
         var jsonCN = {
             "command": "change_name",
+            "old_name" : userName,
             "new_name" : name
         }
         webSocket.send(JSON.stringify(jsonCN));
@@ -151,17 +188,14 @@ $(function(){
         let cur_user_block = $('.current-user');
         let cur_user = users_list[0].innerText.substr(3);
         cur_user_block[0].innerHTML = cur_user;
-        console.log(cur_user);
         getID(cur_user);
-        etTimeout(() => {
+        setTimeout(() => {
             get_history();}, 500);
-
     });
 
     let showYourName = function(){
-        let cur_user_block = $('.menu-section-header');
-        let nameadd = ("<span class=\"NameStyle\">" + userName + "</span>");
-        cur_user_block.append(nameadd);
+        let cur_user_block = $('.NameStyle');
+        cur_user_block[0].innerText = userName.replaceAll(/"/g, '');
     }
 
     let checkAuthStatus = function(){
@@ -170,11 +204,14 @@ $(function(){
         }
         webSocket.send(JSON.stringify(jsonCAS));
     }
+
     setTimeout(() => {
         checkAuthStatus();}, 500);
 
     setTimeout(() => {
-        initChat();}, 1500);
+        initChat();}, 1000);
+
+
 
 
 

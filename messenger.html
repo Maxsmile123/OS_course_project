@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <link rel="icon" type="image/png" href="resourses/chat.png"/>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,45 +13,46 @@
     <script src="js/interactive_menu.js"></script>
 </head>
 <body>
-    <div class="main">
-        <div class="icon-section">
-            <button id="mainMenu" class="menu"><img src="resourses/list.png" height="42px" width="35px"></button>
+<div class="main">
+    <div class="icon-section">
+        <button id="mainMenu" class="menu"><img src="resourses/list.png" height="42px" width="35px"></button>
+    </div>
+    <div class="menu-section">
+        <div class="menu-section-header">
+            <span class="NameStyle"></span>
+
+            <button class="exit"><img src="resourses/free-icon-remove-1828843.png" height="34px" width="34px"></button>
         </div>
-        <div class="menu-section"> 
-            <div class="menu-section-header">
-
-                <button class="exit"><img src="resourses/free-icon-remove-1828843.png" height="34px" width="34px"></button>
-            </div>
-            <ul>
-                <a id ="CN" href="#"><li>Change name</li></a>
-                <a href="#"><li>About</li></a>
-                <a href="#"><li>Help</li></a>
-                <a href="#"><li>Logout</li></a>
-            </ul>
-            <div class="menu-section-foot">
-                &copy; Copyright 2022</br>&nbsp Sysoev Maksim
-            </div>
-        </div>
-        <div class="left">
-            <div class="messages-list">
-
-            </div>
-
-            <div class="input">
-                <button name="files"> <img src="resourses/premium-icon-paper-clip-354597.png" height="41px" width="41px"> </button>
-                <textarea id="textarea" spellcheck="true" maxlength="1024" cols="150" rows="3.5" placeholder="Введите текст сообщения..." ></textarea>
-                <button id="send"><img src="resourses/free-icon-right-arrow-2026746.png" height="41px"></button>
-            </div>
-        </div>      
-        <div class="right">
-            <div class="users-list">
-                <ul class = "users-list-ul">
-                    <li><a class ="NeedToClick" href="#">🟢 all</a></li>
-                </ul>
-
-            </div>
-            <div class="current-user">all</div>
+        <ul>
+            <a id ="CN" href="#"><li>Change name</li></a>
+            <a href="https://github.com/Maxsmile123/OS_course_project#readme" target="_blank"><li>About</li></a>
+            <a href="mailto:sysoevmaksim27@gmail.com?subject=question about Messenger" target="_blank"><li>Help</li></a>
+            <a href="C:\\Users\\Sysoe\\VSCodeProjects\\Frontend motherfacker\\index.html"><li>Logout</li></a>
+        </ul>
+        <div class="menu-section-foot">
+            &copy; Copyright 2022</br>&nbsp Sysoev Maksim
         </div>
     </div>
+    <div class="left">
+        <div class="messages-list">
+
+        </div>
+
+        <div class="input">
+            <button name="files"> <img src="resourses/premium-icon-paper-clip-354597.png" height="41px" width="41px"> </button>
+            <textarea id="textarea" spellcheck="true" maxlength="1024" cols="150" rows="3.5" placeholder="Введите текст сообщения..." ></textarea>
+            <button id="send"><img src="resourses/free-icon-right-arrow-2026746.png" height="41px"></button>
+        </div>
+    </div>
+    <div class="right">
+        <div class="users-list">
+            <ul class = "users-list-ul">
+                <li><a class ="NeedToClick" href="#">🟢 all</a></li>
+            </ul>
+
+        </div>
+        <div class="current-user">all</div>
+    </div>
+</div>
 </body>
 </html>
