@@ -1,5 +1,4 @@
-# Web messenger
-<img alt="chat icon" src="https://github.com/Maxsmile123/OS_course_work/blob/935d9543b3ced5250740c41da0c39ba31ca85891/resourses/chat.png" width="500px">
+# Web messenger <img alt="chat icon" src="https://github.com/Maxsmile123/OS_course_work/blob/935d9543b3ced5250740c41da0c39ba31ca85891/resourses/chat.png" width="30px">
 
 ### Description
 
@@ -27,7 +26,7 @@ who we have an active chat with. The button in the upper left corner pushes the 
 
 
 ### layout:
-<img alt="layout" src="https://github.com/Maxsmile123/OS_course_work/blob/935d9543b3ced5250740c41da0c39ba31ca85891/resourses/img_1.png" width="100%">
+<img alt="layout" src="https://github.com/Maxsmile123/OS_course_project/blob/a2b57dff4c6995ebfb37275eafa7631e31def433/resourses/img_1.png" width="100%">
 
 ---
 
