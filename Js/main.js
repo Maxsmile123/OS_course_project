@@ -2,7 +2,7 @@ $(function(){
 
     var myID = undefined;
     var userName = undefined;
-    var user_id_to = -1;
+    var user_id_to = undefined;
 
     webSocket = new WebSocket("ws://localhost:9001");
 
@@ -15,7 +15,6 @@ $(function(){
 
     webSocket.onclose = function(event){
         if (!event.wasClear){
-
             alert("Connection terminated... please log in again. \nCode Error: 2");
             window.location.href = "C:\\Users\\Sysoe\\VSCodeProjects\\Frontend motherfacker\\index.html"; // redirect on auth page
         } else{
@@ -44,7 +43,6 @@ $(function(){
         get_users_list();
         get_history();
         showYourName();
-
     };
 
     let get_history = function(){
@@ -59,9 +57,9 @@ $(function(){
     }
 
     let processingMSG = function(data){
+        console.log(data);
         if (data.command == "change_name"){
             if (data.result == "true"){
-                console.log(data.new_name);
                 userName = data.new_name;
                 showYourName();
                 alert("The name has been successfully changed! :)");
@@ -69,7 +67,7 @@ $(function(){
                 alert("Cannot be changed to the entered name :( \nError code: 3");
             }
         } else if (data.command == "private_msg"){
-            addSendMSG(data);
+            addResMSG(data);
         } else if (data.command == "get_id"){
             user_id_to = data.id;
         } else if (data.command == "check"){
@@ -78,27 +76,12 @@ $(function(){
             }
             myID = data.user_id;
             userName = data.name;
-            console.log(myID);
-            console.log(userName);
         } else if (data.command == "load_users"){
             loadUsers(data);
         } else if (data.command == "load_msg"){
             loadMessages(data);
         } else if (data.command == "update"){
-            let jsonUSERS = {
-                "command": "load_users",
-                "user_id": myID
-            }
-            let usersList = $('.users-list-ul');
-            usersList[0].innerText = "";
-            webSocket.send(JSON.stringify(jsonUSERS));
-        } else if (data.command == "ping"){
-            let jsonPING = {
-                "command": "ping",
-                "user_id": myID,
-            }
-            webSocket.send(JSON.stringify(jsonPING));
-
+            get_users_list();
         }
 
 
@@ -145,7 +128,7 @@ $(function(){
 
     let loadUsers = function(data){
         let usersList = $('.users-list-ul');
-        let user = undefined;
+        let user;
         if(data.status == "0"){
             user = $('<li><a class ="NeedToClick" href="#">' + '🔴 ' + data.name + '</a></li>');
         } else if (data.status == "1"){
@@ -163,7 +146,13 @@ $(function(){
         webSocket.send(JSON.stringify(jsonID));
     }
 
-    let addSendMSG = function(data) {
+    function validateName (name) {
+        if(name.match(/^[a-zA-Zа-яА-Я]+\s?[a-zA-Zа-яА-Я]+/g) == null) {
+            return false;
+        } return true;
+    }
+
+    let addResMSG = function(data) {
         let messagesList = $('.messages-list');
         data.message = data.message.replaceAll(/"/g, '');
         let headerItem = $('<span class="message-header">'
@@ -175,6 +164,10 @@ $(function(){
 
     $('#CN').click(function(){
         let name = prompt('Enter a new username:');
+        if(!validateName(name)){
+            alert("Cannot be changed to the entered name :( \nError code: 3");
+            return;
+        }
         var jsonCN = {
             "command": "change_name",
             "old_name" : userName,
@@ -190,12 +183,16 @@ $(function(){
         cur_user_block[0].innerHTML = cur_user;
         getID(cur_user);
         setTimeout(() => {
-            get_history();}, 500);
+            get_history();}, 400);
     });
 
     let showYourName = function(){
         let cur_user_block = $('.NameStyle');
-        cur_user_block[0].innerText = userName.replaceAll(/"/g, '');
+        if(userName.replaceAll(/"/g, '').length > 11){
+            cur_user_block[0].innerText = userName.replaceAll(/"/g, '').slice(0,10) + "..";
+        } else {
+            cur_user_block[0].innerText = userName.replaceAll(/"/g, '');
+        }
     }
 
     let checkAuthStatus = function(){
@@ -209,15 +206,6 @@ $(function(){
         checkAuthStatus();}, 500);
 
     setTimeout(() => {
-        initChat();}, 1000);
-
-
-
-
-
-
-
-
-
+        initChat();}, 1100);
 
 })
